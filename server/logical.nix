@@ -1,4 +1,7 @@
 # Logical definition of our server
+let
+  lib = (import <nixpkgs> {}).lib;
+in
 
 with import ./common.nix;
 
@@ -25,17 +28,24 @@ in {
 
     services = {
       administrator = appConfig.administrator;
-      helloworld = {
-        enable = appConfig.helloworld.enable;
-        port = 3000;
-      };
+      helloworld = appConfig.helloworld.service;
       nginx = {
         enable = true;
         virtualHosts = {
-          "${appConfig.helloworld.host}" = pkgs.lib.mkIf appConfig.helloworld.enable {
-            inherit (appConfig.helloworld) enableSSL forceSSL;     
+          "_" = {
+            default = true;
             locations."/" = {
-              proxyPass = "http://localhost:3000";
+              # There's a return directive defined in the latest nixpkgs nginx module. Newer channel must be pinned (?)
+              extraConfig = ''
+                return 404;
+              '';
+            };
+          };
+
+          "${appConfig.helloworld.proxy.host}" = pkgs.lib.mkIf appConfig.helloworld.proxy.enable {
+            inherit (appConfig.helloworld.proxy) enableSSL forceSSL;     
+            locations."/" = {
+              proxyPass = "http://localhost:${toString appConfig.helloworld.service.port}";
             };
           };
         };

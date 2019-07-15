@@ -1,6 +1,9 @@
 version: "3"
 services:
-  web:
+  helloworld:
     image: adamgolab/hello-world
+    env_file: 
+      - "./.env.helloworld"
     ports:
-      - "${PORT:-3000}:8000"
+      - "${HOST:-0.0.0.0}:${PORT:-3000}:8000"
+    volumes: ["${STATE_DIR:-./state}/inhost:/incontainer"]
